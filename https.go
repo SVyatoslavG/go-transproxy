@@ -68,6 +68,12 @@ func (s HTTPSProxy) Start() error {
 				origServer = net.JoinHostPort(origServer, "443")
 			}
 
+			// Detect and prevent self-referencing loop
+			if origServer == s.ListenAddress || origServer == tc.LocalAddr().String() {
+				log.Printf("warn: Detected self-referencing connection to %s, dropping to prevent loop", origServer)
+				return
+			}
+
 			// access logging
 			host, _, _ := net.SplitHostPort(tc.RemoteAddr().String())
 			log.Printf("info: category='HTTPS-Proxy' remoteAddr='%s' method=CONNECT host='%s'", host, origServer)
